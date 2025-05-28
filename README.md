@@ -3,7 +3,6 @@
 
 ## 1. التعليقات الأولية والإعدادات (الأسطر 1-82)  
 ```cpp
-// روبوت بيفollow خطوط بترتيب حرف V للسينسورز ... (الأسطر 1–8)
 // Line follower robot with V-shaped sensor arrangement (Lines 1-8)
 int IN1 = 2; // Motor control pins (Lines 9-17)
 int thresholdValue = 200; // Black/white threshold (Lines 18-20)
