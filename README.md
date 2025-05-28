@@ -4,13 +4,14 @@
 ## 1. التعليقات الأولية والإعدادات (الأسطر 1-82)  
 ```cpp
 // روبوت بيفollow خطوط بترتيب حرف V للسينسورز ... (الأسطر 1–8)
-int IN1 = 2; // دبابيس الموتور (الأسطر 9–17)
-int thresholdValue = 200; // قيمة تمييز اللون الأسود عن الأبيض (الأسطر 18–20)
-int baseSpeed = 70; // سرعة الموتورز (الأسطر 22–25)
-float leftMotorFactor = 0.85; // ضبط توازن الموتور (الأسطر 27–28)
-float Kp = 1.0, Ki = 0.003, Kd = 2.0; // إعدادات PID (الأسطر 31–34)
-bool is90DegreeTurn = false; // علامات للدوران (الأسطر 36–37)
-#define STATE_IDLE 0 // تعريف حالات الروبوت (الأسطر 39–51)
+// Line follower robot with V-shaped sensor arrangement (Lines 1-8)
+int IN1 = 2; // Motor control pins (Lines 9-17)
+int thresholdValue = 200; // Black/white threshold (Lines 18-20)
+int baseSpeed = 70; // Base motor speed (Lines 22-25)
+float leftMotorFactor = 0.85; // Motor calibration (Lines 27-28)
+float Kp = 1.0, Ki = 0.003, Kd = 2.0; // PID tuning (Lines 31-34)
+bool is90DegreeTurn = false; // Turn flags (Lines 36-37)
+#define STATE_IDLE 0 // State machine (Lines 39-51)
 ```
 - **الغرض**: تحدد مواصفات الهاردوير (مسافات السنسورز، عرض المسار) والمتغيرات الأولية.  
 - **ملاحظات مهمة**:  
@@ -22,9 +23,9 @@ bool is90DegreeTurn = false; // علامات للدوران (الأسطر 36–3
 
 ## 2. دوال تحكم الموتور (الأسطر 84-115)  
 ```cpp
-void rotateLeft(int speed) { ... } (الأسطر 44–58)  
-void rotateRight(int speed) { ... } (الأسطر 60–74)  
-void stopMotors() { ... } (الأسطر 76–78)  
+void rotateLeft(int speed) { ... } (Lines 84-98)
+void rotateRight(int speed) { ... } (Lines 100-114)
+void stopMotors() { ... } (Lines 116-118) 
 ```
 - **بتعمل إيه؟**:  
   - `rotateLeft/Right()`: بتخلي الموتورز يدوروا في اتجاهين متعاكسين للدوران الحاد.  
@@ -37,15 +38,15 @@ void stopMotors() { ... } (الأسطر 76–78)
 
 ## 3. PID Controller (الأسطر 117-208)  
 ```cpp
-void calculatePID() {  
-  error = 0;  
-  if (LEFT1 && LEFT2 && !RIGHT1 && !RIGHT2) { ... } // كشف دوران 90 درجة (الأسطر 89–112)  
-  else { // حالة المتابعة العادية (الأسطر 114–125)  
-    if (LEFT1) error -= 4; // السنسور الخارجي ليه تأثير أقوى  
-    if (RIGHT1) error += 4;  
-  }  
-  derivative = error - lastError; // حساب PID (الأسطر 127–161)  
-}  
+void calculatePID() {
+  error = 0;
+  if (LEFT1 && LEFT2 && !RIGHT1 && !RIGHT2) { ... } (Lines 119-142)
+  else {
+    if (LEFT1) error -= 4;
+    if (RIGHT1) error += 4; 
+  }
+  derivative = error - lastError; (Lines 144-178)
+}
 ```
 - **بتشتغل إزاي؟**:  
   - **حساب الخطأ**: لو الخطأ موجب يبقى الروبوت ناحية اليمين (يخش لليسار)، لو سالب يبقى ناحية اليسار (يخش لليمين).  
@@ -56,13 +57,13 @@ void calculatePID() {
 
 ## 4. دالة الإعداد setup (الأسطر 210-255)  
 ```cpp
-void setup() {  
-  pinMode(IN1, OUTPUT); // دبابيس الموتور (الأسطر 165–172)  
-  pinMode(Lsensor1, INPUT); // دبابيس السنسور (الأسطر 173–176)  
-  Serial.begin(115200); // التصحيح (الأسطر 178)  
-  // ومضات الليد (الأسطر 196–209)  
-  delay(5000); // انتظار 5 ثواني قبل البدء (الأسطر 218–225)  
-}  
+void setup() {
+  pinMode(IN1, OUTPUT); (Lines 212-219)
+  pinMode(Lsensor1, INPUT); (Lines 220-223)
+  Serial.begin(115200); (Line 225)
+  // LED blink sequence (Lines 233-246)
+  delay(5000); // 5-second countdown (Lines 248-255)
+} 
 ```
 - **الغرض**: بتهيئ الهاردوير وتبدأ السيريال مونيتور.  
 - **مميزات مهمة**:  
@@ -74,14 +75,13 @@ void setup() {
 ## 5. اللوب الرئيسي loop (الأسطر 257-468)  
 ### **الجزء 5.1: قراءة السنسورز (الأسطر 260-270)**  
 ```cpp
-RIGHT1 = (analogRead(Rsensor1) > thresholdValue) ? 1 : 0; // تحويل الإشارة لرقمي  
-```
+RIGHT1 = (analogRead(Rsensor1) > thresholdValue) ? 1 : 0;```
 - **ببساطة**: بتحول قراءة السنسور من إشارة تماثلية (0–1023) لرقم ثنائي (1=أسود، 0=أبيض).  
 
 ### **الجزء 5.2: حالات خاصة (الأسطر 274-345)**  
 ```cpp
-if (RIGHT1 && RIGHT2 && LEFT1 && LEFT2) { stopMotors(); } // لو كل السنسورز شايفة أسود -> قف (الأسطر 185–194)  
-if (!RIGHT1 && !RIGHT2 && !LEFT1 && !LEFT2) { moveForward(); } // لو كلها أبيض -> امشي (الأسطر 200–215)  
+if (RIGHT1 && RIGHT2 && LEFT1 && LEFT2) { stopMotors(); }
+if (!RIGHT1 && !RIGHT2 && !LEFT1 && !LEFT2) { moveForward(); }
 ```
 - **المنطق**:  
   - **كل السنسورز سودا**: يبقى في تقاطع -> وقف كامل.  
@@ -89,33 +89,34 @@ if (!RIGHT1 && !RIGHT2 && !LEFT1 && !LEFT2) { moveForward(); } // لو كلها 
 
 ### **الجزء 5.3: التحكم PID (الأسطر 347-390)**  
 ```cpp
-calculatePID();  
-int leftSpeed = baseSpeed - pidOutput; // ضبط سرعة الموتور (الأسطر 327–333)  
-moveForward(leftSpeed, rightSpeed);  
+calculatePID();
+int leftSpeed = baseSpeed - pidOutput;
+moveForward(leftSpeed, rightSpeed);
 ```
 - **إيه اللي بيحصل؟**: بيطبق خرج PID على الموتورز (كل ما زاد `pidOutput` كل ما الدوران يكون أشد).  
 
 ### **الجزء 5.4: التعامل مع الدوران (الأسطر 391-468)**  
 ```cpp
-if (isTurning && millis() - turnStartTime < turn90Duration) {  
-  rotateLeft(turnSpeed); // دوران بقياس الوقت (الأسطر 302–310)  
-}  
+if (isTurning && millis() - turnStartTime < turn90Duration) {
+  rotateLeft(turnSpeed);
+} 
 ```
 - **ليه الدوران بالتايمر؟**: عشان يضمن أن الدوران يكمل 90 درجة حتى لو السنسورز مشفتش الخط في المنتصف.  
 
 ### **الجزء 5.5: التصحيح (الأسطر 470-565)**  
 ```cpp
-void printRobotStatus() {  
-  Serial.print("اليسار: "); Serial.print(leftVal1); // قراءات السنسور (الأسطر 380–389)  
-  Serial.print("الحالة: "); // إجراء الروبوت الحالي (الأسطر 397–415)  
+void printRobotStatus() {
+  Serial.print("Left: "); Serial.print(leftVal1);
+  Serial.print("State: ");
 }  
 ```
 - **استخدامها**: بتبعث بيانات السنسورز والحالة على السيريال مونيتور عشان لو في مشكلة تعرف سببها.  
 
 ### **الجزء 5.6: دوال مساعدة (الأسطر 567-593)**  
 ```cpp
-void moveForward(int leftSpeed, int rightSpeed) { ... } (الأسطر 427–441)  
+void moveForward(int leftSpeed, int rightSpeed) { ... }
 ```
+
 - **تفصيل صغير**: بتضبط سرعة الموتورز حسب عوامل التصحيح قبل ما تحركهم.  
 
 ---
@@ -130,9 +131,9 @@ void moveForward(int leftSpeed, int rightSpeed) { ... } (الأسطر 427–441)
 
 # مكان معادلة الـ PID في الكود
 
-معادلة الـ PID الأساسية موجودة في السطور من **127 إلى 161** في الكود، بالظبط في دالة `calculatePID()`. هشرحها بالتفصيل بالعربي المصري:
+معادلة الـ PID الأساسية موجودة في السطور من **193 إلى 201** في الكود، بالظبط في دالة `calculatePID()`. هشرحها بالتفصيل بالعربي المصري:
 
-## المعادلة الأساسية (الأسطر 147-154)
+## المعادلة الأساسية (الأسطر 193-201)
 ```cpp
 if (is90DegreeTurn) {
   // لـ 90 درجة: معادلة PID بتعدل شوية
